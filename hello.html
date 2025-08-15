@@ -1,47 +1,55 @@
-<!doctype html><meta charset="utf-8">
+<!doctype html>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Hello Universe</title>
 <style>
-  :root{
-    /* Default to WHITE so it lights max on mono-green displays */
-    --txt: #ffffff;              /* try ?color=green to force #00ff00 */
-    --size: 96;                  /* px; override via ?size=120 etc. */
-    --weight: 900;               /* very bold = thicker strokes */
-    --letter: 0.3px;             /* tiny tracking helps pixel legibility */
+  :root {
+    /* default colour, can be overridden via ?color=green or ?color=00ff00 */
+    --txt: #ffffff;
+    /* default font size, can be overridden via ?size=120 */
+    --size: 96;
+    --weight: 900;
+    --letter: 0.3px;
     --line: 1.1;
   }
-  html,body{
-    margin:0;height:100%;background:transparent; /* black/transparent -> see-through */
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: transparent; /* transparent background so the HUD floats */
   }
-  .screen{
-    height:100%;display:grid;place-items:center;
-    /* Avoid antialiasing tricks that blur on waveguides */
-    -webkit-font-smoothing:none; text-rendering:optimizeSpeed;
+  .screen {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    -webkit-font-smoothing: none;
+    text-rendering: optimizeSpeed;
   }
-  .txt{
-    color:var(--txt);
+  .txt {
+    color: var(--txt);
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     font-weight: var(--weight);
     line-height: var(--line);
     letter-spacing: var(--letter);
-    text-align:center;
-    /* Huge, responsive fallback if size not supplied */
+    text-align: center;
     font-size: clamp(32px, 8vw, calc(var(--size) * 1px));
-    /* No shadows/outlines; keep glyphs crisp */
   }
 </style>
-<div class="screen"><div id="t" class="txt">HELLO UNIVERSE</div></div>
+
+<div class="screen">
+  <div id="t" class="txt">HELLO UNIVERSE</div>
+</div>
+
 <script>
-  // Allow quick tweaks via URL params
+  // allow quick tweaks via URL parameters
   const p = new URLSearchParams(location.search);
-  const color = p.get('color'); // "green" or hex like "00ff00"
-  const size  = p.get('size');  // e.g., "120"
-  const text  = p.get('text');  // custom text if needed
+  const color = p.get('color');  // e.g. 'green' or '00ff00'
+  const size  = p.get('size');   // e.g. '120'
+  const text  = p.get('text');   // custom text if needed
 
   if (color) {
     const c = color.toLowerCase() === 'green' ? '#00ff00' :
               color.startsWith('#') ? color :
-              ('#' + color);
+              '#' + color;
     document.documentElement.style.setProperty('--txt', c);
   }
   if (size) document.documentElement.style.setProperty('--size', size);
