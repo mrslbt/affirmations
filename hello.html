@@ -2,9 +2,48 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Hello Universe</title>
 <style>
-  html,body{margin:0;height:100%;background:#000}
-  .screen{display:grid;place-items:center;height:100%;background:#000}
-  .txt{color:#fff;font:800 clamp(36px,8vw,96px)/1.15 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-       letter-spacing:.3px;text-align:center;padding:8vh 4vw;word-break:keep-all}
+  :root{
+    /* Default to WHITE so it lights max on mono-green displays */
+    --txt: #ffffff;              /* try ?color=green to force #00ff00 */
+    --size: 96;                  /* px; override via ?size=120 etc. */
+    --weight: 900;               /* very bold = thicker strokes */
+    --letter: 0.3px;             /* tiny tracking helps pixel legibility */
+    --line: 1.1;
+  }
+  html,body{
+    margin:0;height:100%;background:transparent; /* black/transparent -> see-through */
+  }
+  .screen{
+    height:100%;display:grid;place-items:center;
+    /* Avoid antialiasing tricks that blur on waveguides */
+    -webkit-font-smoothing:none; text-rendering:optimizeSpeed;
+  }
+  .txt{
+    color:var(--txt);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-weight: var(--weight);
+    line-height: var(--line);
+    letter-spacing: var(--letter);
+    text-align:center;
+    /* Huge, responsive fallback if size not supplied */
+    font-size: clamp(32px, 8vw, calc(var(--size) * 1px));
+    /* No shadows/outlines; keep glyphs crisp */
+  }
 </style>
-<div class="screen"><div class="txt">Hello Universe</div></div>
+<div class="screen"><div id="t" class="txt">HELLO UNIVERSE</div></div>
+<script>
+  // Allow quick tweaks via URL params
+  const p = new URLSearchParams(location.search);
+  const color = p.get('color'); // "green" or hex like "00ff00"
+  const size  = p.get('size');  // e.g., "120"
+  const text  = p.get('text');  // custom text if needed
+
+  if (color) {
+    const c = color.toLowerCase() === 'green' ? '#00ff00' :
+              color.startsWith('#') ? color :
+              ('#' + color);
+    document.documentElement.style.setProperty('--txt', c);
+  }
+  if (size) document.documentElement.style.setProperty('--size', size);
+  if (text) document.getElementById('t').textContent = text.toUpperCase();
+</script>
