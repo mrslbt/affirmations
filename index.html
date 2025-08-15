@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Affirmations – 30s</title>
+  <style>
+    :root { --bg:#0f172a; --card:#111827; --text:#e5e7eb; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); display:grid; min-height:100svh; place-items:center; }
+    .wrap { width:min(720px, 92vw); }
+    .card { background:var(--card); border-radius:20px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+    .big { font-size: clamp(22px, 4.2vw, 36px); line-height:1.25; text-align:center; min-height:5.5em; display:grid; place-items:center; padding:24px; transition: opacity .5s ease; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    button, select { background:#1f2937; color:var(--text); border:1px solid #374151; padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    details { margin-top:14px; }
+    textarea { width:100%; min-height:160px; border-radius:12px; padding:12px; background:#0b1220; color:var(--text); border:1px solid #334155; }
+    small { opacity:.7 }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div id="display" class="big">Tap Start</div>
+      <div class="row" style="margin:10px 0 16px">
+        <button id="startBtn">Start</button>
+        <button id="pauseBtn" disabled>Pause</button>
+        <button id="prevBtn" disabled>&larr; Prev</button>
+        <button id="nextBtn" disabled>Next &rarr;</button>
+        <button id="shuffleBtn">Shuffle</button>
+        <select id="intervalSel" title="Interval">
+          <option value="30">30s</option>
+          <option value="20">20s</option>
+          <option value="10">10s</option>
+          <option value="60">60s</option>
+        </select>
+      </div>
+      <details>
+        <summary><strong>Edit your 10 affirmations</strong></summary>
+        <p><small>One per line. Changes autosave.</small></p>
+        <textarea id="editor"></textarea>
+        <div class="row" style="justify-content:space-between;margin-top:8px">
+          <button id="resetBtn">Reset to sample</button>
+          <small id="countNote"></small>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULTS = [
+      "Why am I so calm today?",
+      "Why is my body getting stronger every day?",
+      "Why do I naturally make smart money moves?",
+      "Why do I attract kind, supportive people?",
+      "Why am I so focused and consistent?",
+      "Why does my work open new doors?",
+      "Why do I sleep deeply and wake refreshed?",
+      "Why do I choose habits that serve me?",
+      "Why do opportunities find me at the right time?",
+      "Why do I feel grateful for this moment?"
+    ];
+    const $ = (id) => document.getElementById(id);
+    const display = $("display"), editor = $("editor");
+    const startBtn = $("startBtn"), pauseBtn = $("pauseBtn");
+    const nextBtn = $("nextBtn"), prevBtn = $("prevBtn");
+    const shuffleBtn = $("shuffleBtn"), intervalSel = $("intervalSel");
+    const resetBtn = $("resetBtn"), countNote = $("countNote");
+
+    let affirmations = JSON.parse(localStorage.getItem("aff_list") || "null") || DEFAULTS.slice();
+    let order = [...affirmations.keys()];
+    let idx = 0, timer = null;
+
+    function saveAffs(list){
+      affirmations = list.filter(Boolean);
+      localStorage.setItem("aff_list", JSON.stringify(affirmations));
+      order = [...affirmations.keys()];
+      idx = Math.min(idx, order.length-1);
+      countNote.textContent = `${affirmations.length} lines saved`;
+    }
+    function fadeSwap(text){
+      display.style.opacity = 0;
+      setTimeout(()=>{ display.textContent = text; display.style.opacity = 1; }, 250);
+    }
+    function showCurrent(){
+      if(!affirmations.length){ fadeSwap("Add at least one line"); return; }
+      const i = order[idx] ?? 0; fadeSwap(affirmations[i]);
+    }
+    function start(){
+      if(timer) return;
+      toggle(true); showCurrent();
+      timer = setInterval(()=> next(1), Number(intervalSel.value)*1000);
+    }
+    function pause(){ clearInterval(timer); timer=null; toggle(false); }
+    function next(step=1){ if(!affirmations.length) return; idx = (idx+step+order.length)%order.length; showCurrent(); }
+    function shuffle(){ for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; } idx=0; showCurrent(); }
+    function toggle(run){ startBtn.disabled=run; pauseBtn.disabled=!run; nextBtn.disabled=prevBtn.disabled=!affirmations.length; }
+
+    // init
+    editor.value = affirmations.join("\n");
+    countNote.textContent = `${affirmations.length} lines saved`;
+    showCurrent();
+
+    // events
+    startBtn.onclick=start; pauseBtn.onclick=pause;
+    nextBtn.onclick=()=>next(1); prevBtn.onclick=()=>next(-1);
+    shuffleBtn.onclick=shuffle;
+    intervalSel.onchange=()=>{ if(timer){ pause(); start(); } };
+    editor.addEventListener("input", ()=>{ saveAffs(editor.value.split("\n").map(s=>s.trim())); if(!timer) showCurrent(); });
+    resetBtn.onclick=()=>{ editor.value = DEFAULTS.join("\n"); saveAffs(DEFAULTS.slice()); showCurrent(); };
+
+    // keep screen awake while running (best-effort)
+    let wakeLock=null;
+    async function keepAwake(){ try { wakeLock = await navigator.wakeLock.request("screen"); } catch(e){} }
+    document.addEventListener("visibilitychange", ()=> {
+      if(document.visibilityState==="visible" && timer){ keepAwake(); }
+      else if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
+    });
+  </script>
+</body>
+</html>
